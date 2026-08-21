@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Cost-controlled ingestion foundation for the AWS financial data pipeline.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: aws-financial-data-pipeline
+    AllowedPattern: "[a-z0-9-]+"
+  Environment:
+    Type: String
+    Default: portfolio
+    AllowedValues:
+      - portfolio
+      - dev
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures:
+      - arm64
+    MemorySize: 256
+    Timeout: 30
+    Tracing: Active
+    Tags:
+      Project: !Ref ProjectName
+      Environment: !Ref Environment
+      ManagedBy: AWS-SAM
+
+Resources:
+  RawDataBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireNoncurrentVersions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: AWS-SAM
+
+  IngestionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-${Environment}-ingestion"
+      Description: Collects official BCB financial series and writes partitioned JSONL to S3.
+      CodeUri: src/
+      Handler: financial_pipeline.lambda_handler.handler
+      ReservedConcurrentExecutions: 1
+      Environment:
+        Variables:
+          RAW_BUCKET: !Ref RawDataBucket
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Sid: WriteRawFinancialData
+              Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource: !Sub "${RawDataBucket.Arn}/raw/*"
+
+  IngestionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${IngestionFunction}"
+      RetentionInDays: 7
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: AWS-SAM
+
+Outputs:
+  RawDataBucketName:
+    Description: Private bucket receiving the raw BCB JSONL objects.
+    Value: !Ref RawDataBucket
+  IngestionFunctionName:
+    Description: Lambda function to invoke during the controlled first deployment.
+    Value: !Ref IngestionFunction
+  IngestionFunctionArn:
+    Description: ARN of the ingestion Lambda function.
+    Value: !GetAtt IngestionFunction.Arn

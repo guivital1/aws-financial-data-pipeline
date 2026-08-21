@@ -41,7 +41,7 @@ The analytical layer combines Selic and IPCA to expose an approximate real-inter
 
 ## Current milestone
 
-**Local ingestion MVP complete.** The pipeline has already retrieved and validated 676 real observations from the Banco Central do Brasil API. The AWS deployment is the next controlled milestone and is gated by the [cost safety checklist](docs/cost-safety.md).
+**Deployment foundation ready.** The pipeline has retrieved and validated 676 real observations from the Banco Central do Brasil API. A zero-spend AWS budget is active, and the first cost-controlled SAM deployment is documented in the [deployment guide](docs/deployment.md).
 
 <details>
   <summary><strong>Run the ingestion locally</strong></summary>
@@ -77,6 +77,7 @@ python -m compileall -q src tests glue
 src/financial_pipeline/  ingestion, validation and Lambda handler
 glue/                    JSONL → partitioned Parquet transformation
 sql/                     Athena schema and analytical view
+template.yaml            cost-controlled AWS SAM infrastructure
 docs/                    architecture, data contract and cost controls
 tests/                   deterministic unit tests
 ```
@@ -87,7 +88,8 @@ tests/                   deterministic unit tests
 - [x] Validated Python ingestion client
 - [x] Lambda handler, Glue transformation and Athena SQL
 - [x] Automated quality checks
-- [ ] Cost-controlled AWS infrastructure
+- [x] Cost-controlled AWS infrastructure as code
+- [ ] Controlled S3 + Lambda deployment
 - [ ] Daily scheduled ingestion
 - [ ] Interactive QuickSight dashboard
 - [ ] Monitoring and portfolio case study
