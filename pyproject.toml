@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aws-financial-data-pipeline"
+version = "0.1.0"
+description = "Automated Brazilian financial data pipeline designed for AWS."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Guilherme Vital" }]
+dependencies = []
+
+[project.scripts]
+financial-pipeline = "financial_pipeline.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
