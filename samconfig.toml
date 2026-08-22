@@ -12,7 +12,7 @@ region = "us-east-2"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 fail_on_empty_changeset = false
-parameter_overrides = "ProjectName=aws-financial-data-pipeline Environment=portfolio"
+parameter_overrides = "ProjectName=aws-financial-data-pipeline Environment=portfolio EnableDailySchedule=false"
 tags = "Project=aws-financial-data-pipeline Environment=portfolio ManagedBy=AWS-SAM"
 
 [default.delete.parameters]

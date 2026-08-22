@@ -8,7 +8,7 @@ flowchart LR
     D --> E[AWS Glue]
     E --> F[(Amazon S3 curated / Parquet)]
     F --> G[Amazon Athena]
-    G --> H[Amazon QuickSight]
+    G -. optional after pricing review .-> H[Amazon QuickSight]
 ```
 
 ## Data layers
@@ -19,7 +19,11 @@ flowchart LR
 
 ## Automation
 
-EventBridge will invoke the Lambda ingestion once per business day. The first cloud iteration will use an on-demand Glue transformation to keep costs predictable. A scheduled transformation can be enabled only after cost measurements are available.
+EventBridge is deployed disabled, then enabled for weekday ingestion only after
+an end-to-end validation. Glue stays on demand so a recurring Spark job cannot
+silently consume credits. Athena runs inside a dedicated workgroup with a 10 MB
+scan cutoff and seven-day result retention. QuickSight remains optional until
+its current pricing is reviewed explicitly.
 
 ## Data sources
 
