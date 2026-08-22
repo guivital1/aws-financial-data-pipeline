@@ -41,7 +41,12 @@ The analytical layer combines Selic and IPCA to expose an approximate real-inter
 
 ## Current milestone
 
-**First AWS milestone deployed.** A zero-spend budget is active, and the controlled S3 + Lambda foundation is live in Ohio. The first manual invocation wrote 337 encrypted USD/BRL and IPCA observations to the raw data lake. See the [deployment evidence](docs/deployment-evidence.md) and the reproducible [deployment guide](docs/deployment.md).
+**Serverless analytics pipeline live on AWS.** A zero-spend budget is active,
+weekday ingestion is automated, and Glue remains on demand to keep Spark costs
+predictable. The validated dataset contains 674 observations across all four
+financial series; Athena queried the curated Parquet layer after scanning only
+7.4 KB. See the [deployment evidence](docs/deployment-evidence.md) and the
+reproducible [deployment guide](docs/deployment.md).
 
 <details>
   <summary><strong>Run the ingestion locally</strong></summary>
@@ -93,9 +98,10 @@ tests/                   deterministic unit tests
 - [x] First encrypted ingestion with real BCB data
 - [x] Cost-guarded Glue, Data Catalog and Athena infrastructure
 - [x] Weekday scheduling and Lambda error monitoring
-- [ ] Enable the validated daily schedule
+- [x] Enable the validated weekday schedule
 - [ ] Interactive QuickSight dashboard
-- [ ] Monitoring and portfolio case study
+- [x] Monitoring and deployment evidence
+- [ ] Portfolio case study and final visualization
 
 ## Data and responsibility
 
