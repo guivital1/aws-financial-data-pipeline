@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Cost-controlled ingestion foundation for the AWS financial data pipeline.
+Description: Cost-controlled serverless analytics pipeline for Brazilian financial data.
 
 Parameters:
   ProjectName:
@@ -13,6 +13,15 @@ Parameters:
     AllowedValues:
       - portfolio
       - dev
+  EnableDailySchedule:
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+
+Conditions:
+  DailyScheduleEnabled: !Equals [!Ref EnableDailySchedule, "true"]
 
 Globals:
   Function:
@@ -50,6 +59,10 @@ Resources:
             Status: Enabled
             NoncurrentVersionExpiration:
               NoncurrentDays: 30
+          - Id: ExpireAthenaResults
+            Status: Enabled
+            Prefix: athena-results/
+            ExpirationInDays: 7
       Tags:
         - Key: Project
           Value: !Ref ProjectName
@@ -93,6 +106,190 @@ Resources:
         - Key: ManagedBy
           Value: AWS-SAM
 
+  DailyIngestionRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "${ProjectName}-${Environment}-weekdays"
+      Description: Collects official BCB series after Brazilian business hours on weekdays.
+      ScheduleExpression: cron(0 21 ? * MON-FRI *)
+      State: !If [DailyScheduleEnabled, ENABLED, DISABLED]
+      Targets:
+        - Arn: !GetAtt IngestionFunction.Arn
+          Id: FinancialIngestionLambda
+          Input: '{"series":["usd_brl","cdi","selic_monthly","ipca"]}'
+
+  DailyIngestionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref IngestionFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DailyIngestionRule.Arn
+
+  IngestionErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-${Environment}-ingestion-errors"
+      AlarmDescription: Signals any failed ingestion invocation.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref IngestionFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  GlueAnalyticsDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: financial_analytics
+        Description: Curated Brazilian financial indicators for portfolio analytics.
+
+  GlueCuratedTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref GlueAnalyticsDatabase
+      TableInput:
+        Name: bcb_curated
+        Description: Deduplicated BCB observations stored as partitioned Parquet.
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          classification: parquet
+          projection.enabled: "true"
+          projection.series_slug.type: enum
+          projection.series_slug.values: usd_brl,cdi,selic_monthly,ipca
+          projection.year.type: integer
+          projection.year.range: 2020,2035
+          projection.month.type: integer
+          projection.month.range: 1,12
+          storage.location.template: !Sub "s3://${RawDataBucket}/curated/bcb/series_slug=${!series_slug}/year=${!year}/month=${!month}/"
+        PartitionKeys:
+          - Name: series_slug
+            Type: string
+          - Name: year
+            Type: int
+          - Name: month
+            Type: int
+        StorageDescriptor:
+          Location: !Sub "s3://${RawDataBucket}/curated/bcb/"
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+          Columns:
+            - {Name: series_id, Type: int}
+            - {Name: series_name, Type: string}
+            - {Name: unit, Type: string}
+            - {Name: frequency, Type: string}
+            - {Name: observation_date, Type: date}
+            - {Name: value, Type: double}
+            - {Name: source, Type: string}
+            - {Name: source_url, Type: string}
+            - {Name: ingested_at, Type: timestamp}
+            - {Name: day, Type: int}
+
+  GlueExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: FinancialDataLakeAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ListDataLakePrefixes
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt RawDataBucket.Arn
+                Condition:
+                  StringLike:
+                    s3:prefix:
+                      - raw/*
+                      - curated/*
+                      - artifacts/*
+              - Sid: ReadBucketMetadata
+                Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:ListBucketMultipartUploads
+                Resource: !GetAtt RawDataBucket.Arn
+              - Sid: ReadRawAndArtifacts
+                Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - !Sub "${RawDataBucket.Arn}/raw/*"
+                  - !Sub "${RawDataBucket.Arn}/artifacts/*"
+              - Sid: WriteCuratedData
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:AbortMultipartUpload
+                  - s3:ListMultipartUploadParts
+                Resource: !Sub "${RawDataBucket.Arn}/curated/*"
+              - Sid: GlueLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws-glue/*"
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws-glue/*:*"
+
+  GlueTransformationJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-${Environment}-transform"
+      Description: Deduplicates raw BCB JSONL and writes analytics-ready Parquet.
+      Role: !GetAtt GlueExecutionRole.Arn
+      GlueVersion: "5.0"
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+      MaxRetries: 0
+      Timeout: 10
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      Command:
+        Name: glueetl
+        PythonVersion: "3"
+        ScriptLocation: !Sub "s3://${RawDataBucket}/artifacts/glue/transform_to_parquet.py"
+      DefaultArguments:
+        "--job-language": python
+        "--RAW_PATH": !Sub "s3://${RawDataBucket}/raw/source=bcb/"
+        "--CURATED_PATH": !Sub "s3://${RawDataBucket}/curated/bcb/"
+        "--enable-auto-scaling": "true"
+
+  AthenaWorkGroup:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: !Sub "${ProjectName}-${Environment}"
+      Description: Cost-guarded analytical queries for the portfolio pipeline.
+      State: ENABLED
+      RecursiveDeleteOption: true
+      WorkGroupConfiguration:
+        EnforceWorkGroupConfiguration: true
+        PublishCloudWatchMetricsEnabled: true
+        BytesScannedCutoffPerQuery: 10000000
+        ResultConfiguration:
+          OutputLocation: !Sub "s3://${RawDataBucket}/athena-results/"
+          EncryptionConfiguration:
+            EncryptionOption: SSE_S3
+
 Outputs:
   RawDataBucketName:
     Description: Private bucket receiving the raw BCB JSONL objects.
@@ -103,3 +300,12 @@ Outputs:
   IngestionFunctionArn:
     Description: ARN of the ingestion Lambda function.
     Value: !GetAtt IngestionFunction.Arn
+  GlueTransformationJobName:
+    Description: On-demand Glue job that creates curated Parquet data.
+    Value: !Ref GlueTransformationJob
+  AthenaWorkGroupName:
+    Description: Athena workgroup with a 10 MB scan limit per query.
+    Value: !Ref AthenaWorkGroup
+  DailyScheduleState:
+    Description: Whether weekday ingestion is currently enabled.
+    Value: !If [DailyScheduleEnabled, ENABLED, DISABLED]

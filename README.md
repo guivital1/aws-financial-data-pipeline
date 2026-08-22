@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python 3.11+" />
   <img src="https://img.shields.io/badge/AWS-ready-FF9900?style=flat-square&amp;logo=amazonwebservices&amp;logoColor=white" alt="AWS ready" />
   <img src="https://img.shields.io/badge/data-BCB_official-2563EB?style=flat-square" alt="Official BCB data" />
-  <img src="https://img.shields.io/badge/tests-6_passing-65A30D?style=flat-square" alt="6 passing tests" />
+  <img src="https://img.shields.io/badge/tests-9_passing-65A30D?style=flat-square" alt="9 passing tests" />
 </p>
 
 <p align="center"><strong>Official Brazilian financial data, collected automatically and prepared for cloud analytics.</strong></p>
@@ -91,7 +91,9 @@ tests/                   deterministic unit tests
 - [x] Cost-controlled AWS infrastructure as code
 - [x] Controlled S3 + Lambda deployment
 - [x] First encrypted ingestion with real BCB data
-- [ ] Daily scheduled ingestion
+- [x] Cost-guarded Glue, Data Catalog and Athena infrastructure
+- [x] Weekday scheduling and Lambda error monitoring
+- [ ] Enable the validated daily schedule
 - [ ] Interactive QuickSight dashboard
 - [ ] Monitoring and portfolio case study
 
