@@ -41,7 +41,7 @@ The analytical layer combines Selic and IPCA to expose an approximate real-inter
 
 ## Current milestone
 
-**Deployment foundation ready.** The pipeline has retrieved and validated 676 real observations from the Banco Central do Brasil API. A zero-spend AWS budget is active, and the first cost-controlled SAM deployment is documented in the [deployment guide](docs/deployment.md).
+**First AWS milestone deployed.** A zero-spend budget is active, and the controlled S3 + Lambda foundation is live in Ohio. The first manual invocation wrote 337 encrypted USD/BRL and IPCA observations to the raw data lake. See the [deployment evidence](docs/deployment-evidence.md) and the reproducible [deployment guide](docs/deployment.md).
 
 <details>
   <summary><strong>Run the ingestion locally</strong></summary>
@@ -89,7 +89,8 @@ tests/                   deterministic unit tests
 - [x] Lambda handler, Glue transformation and Athena SQL
 - [x] Automated quality checks
 - [x] Cost-controlled AWS infrastructure as code
-- [ ] Controlled S3 + Lambda deployment
+- [x] Controlled S3 + Lambda deployment
+- [x] First encrypted ingestion with real BCB data
 - [ ] Daily scheduled ingestion
 - [ ] Interactive QuickSight dashboard
 - [ ] Monitoring and portfolio case study
