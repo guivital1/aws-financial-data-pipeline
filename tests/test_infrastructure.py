@@ -15,6 +15,7 @@ class InfrastructureSafetyTests(unittest.TestCase):
         self.assertIn("BytesScannedCutoffPerQuery: 10000000", self.template)
         self.assertIn("MaxConcurrentRuns: 1", self.template)
         self.assertIn("- s3:ListBucket\n", self.template)
+        self.assertIn('curated_$folder$"', self.template)
 
     def test_analytics_layer_is_managed_as_code(self):
         self.assertIn("Type: AWS::Glue::Job", self.template)

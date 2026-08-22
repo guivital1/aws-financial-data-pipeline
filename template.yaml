@@ -241,7 +241,9 @@ Resources:
                   - s3:DeleteObject
                   - s3:AbortMultipartUpload
                   - s3:ListMultipartUploadParts
-                Resource: !Sub "${RawDataBucket.Arn}/curated/*"
+                Resource:
+                  - !Sub "${RawDataBucket.Arn}/curated/*"
+                  - !Sub "${RawDataBucket.Arn}/curated_$folder$"
               - Sid: GlueLogs
                 Effect: Allow
                 Action:
