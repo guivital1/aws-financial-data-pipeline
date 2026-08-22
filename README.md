@@ -1,21 +1,25 @@
 <p align="center">
-  <img src="assets/financial-pipeline-cover.svg" alt="AWS Financial Data Pipeline" width="100%" />
+  <img src="docs/og.jpg" alt="Brazilian Markets Data Pulse" width="100%" />
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python 3.11+" />
   <img src="https://img.shields.io/badge/AWS-ready-FF9900?style=flat-square&amp;logo=amazonwebservices&amp;logoColor=white" alt="AWS ready" />
   <img src="https://img.shields.io/badge/data-BCB_official-2563EB?style=flat-square" alt="Official BCB data" />
-  <img src="https://img.shields.io/badge/tests-9_passing-65A30D?style=flat-square" alt="9 passing tests" />
+  <img src="https://img.shields.io/badge/tests-12_passing-65A30D?style=flat-square" alt="12 passing tests" />
 </p>
 
 <p align="center"><strong>Official Brazilian financial data, collected automatically and prepared for cloud analytics.</strong></p>
+
+<p align="center">
+  <a href="https://guivital1.github.io/aws-financial-data-pipeline/"><strong>Explore the live dashboard →</strong></a>
+</p>
 
 ## Pipeline at a glance
 
 | Source | Ingestion | Processing | Analytics | Visualization |
 | :---: | :---: | :---: | :---: | :---: |
-| BCB SGS API | EventBridge + Lambda | S3 + Glue + Parquet | Athena + SQL | QuickSight |
+| BCB SGS API | EventBridge + Lambda | S3 + Glue + Parquet | Athena + SQL | Interactive GitHub Pages |
 
 ```mermaid
 flowchart LR
@@ -25,7 +29,7 @@ flowchart LR
     RAW --> G[Glue]
     G --> CUR[(S3 · Parquet)]
     CUR --> A[Athena]
-    A --> Q[QuickSight]
+    A --> D[Interactive dashboard]
 ```
 
 ## Financial signals
@@ -83,7 +87,8 @@ src/financial_pipeline/  ingestion, validation and Lambda handler
 glue/                    JSONL → partitioned Parquet transformation
 sql/                     Athena schema and analytical view
 template.yaml            cost-controlled AWS SAM infrastructure
-docs/                    architecture, data contract and cost controls
+docs/                    interactive dashboard, architecture and evidence
+scripts/                 dashboard data export
 tests/                   deterministic unit tests
 ```
 
@@ -99,9 +104,9 @@ tests/                   deterministic unit tests
 - [x] Cost-guarded Glue, Data Catalog and Athena infrastructure
 - [x] Weekday scheduling and Lambda error monitoring
 - [x] Enable the validated weekday schedule
-- [ ] Interactive QuickSight dashboard
+- [x] Interactive public dashboard
 - [x] Monitoring and deployment evidence
-- [ ] Portfolio case study and final visualization
+- [x] Portfolio case study and final visualization
 
 ## Data and responsibility
 

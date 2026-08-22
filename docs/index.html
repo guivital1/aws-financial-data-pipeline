@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4f1ea" />
+    <meta name="description" content="Interactive dashboard powered by an AWS pipeline for official Brazilian financial data." />
+    <meta property="og:title" content="Brazilian Markets · Data Pulse" />
+    <meta property="og:description" content="An interactive view of official BCB data, engineered on AWS." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://guivital1.github.io/aws-financial-data-pipeline/" />
+    <meta property="og:image" content="https://guivital1.github.io/aws-financial-data-pipeline/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Brazilian Markets · Data Pulse" />
+    <meta name="twitter:description" content="An interactive view of official BCB data, engineered on AWS." />
+    <meta name="twitter:image" content="https://guivital1.github.io/aws-financial-data-pipeline/og.jpg" />
+    <title>Brazilian Markets · Data Pulse</title>
+    <link rel="stylesheet" href="dashboard.css" />
+    <script src="dashboard.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+
+    <header class="topbar shell">
+      <a class="brand" href="#top" aria-label="Data Pulse home">
+        <span class="brand-mark">GV</span>
+        <span>DATA PULSE</span>
+      </a>
+      <nav aria-label="Dashboard navigation">
+        <a href="#signals">Signals</a>
+        <a href="#pipeline">Pipeline</a>
+        <a href="https://github.com/guivital1/aws-financial-data-pipeline">GitHub ↗</a>
+      </nav>
+    </header>
+
+    <main id="top" class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow"><span class="status-dot"></span> AWS PIPELINE · LIVE DATA</p>
+          <h1>Brazilian markets,<br /><em>decoded.</em></h1>
+          <p class="hero-copy">Official financial signals transformed from raw public data into a clean, queryable analytical layer.</p>
+        </div>
+        <aside class="hero-note">
+          <span>DATA FRESHNESS</span>
+          <strong id="freshness">Loading…</strong>
+          <small>Banco Central do Brasil · SGS</small>
+        </aside>
+      </section>
+
+      <section id="signals" class="metrics" aria-label="Latest financial indicators">
+        <article class="metric-card" data-tone="blue">
+          <div class="metric-top"><span>USD / BRL</span><span class="metric-code">FX</span></div>
+          <strong id="kpi-usd">—</strong>
+          <p id="delta-usd">Latest official close</p>
+        </article>
+        <article class="metric-card" data-tone="violet">
+          <div class="metric-top"><span>CDI</span><span class="metric-code">DI</span></div>
+          <strong id="kpi-cdi">—</strong>
+          <p id="delta-cdi">Daily benchmark</p>
+        </article>
+        <article class="metric-card" data-tone="orange">
+          <div class="metric-top"><span>SELIC</span><span class="metric-code">MM</span></div>
+          <strong id="kpi-selic">—</strong>
+          <p id="delta-selic">Monthly accumulated</p>
+        </article>
+        <article class="metric-card" data-tone="green">
+          <div class="metric-top"><span>IPCA</span><span class="metric-code">π</span></div>
+          <strong id="kpi-ipca">—</strong>
+          <p id="delta-ipca">Monthly inflation</p>
+        </article>
+      </section>
+
+      <section class="panel chart-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">TIME SERIES EXPLORER</p>
+            <h2 id="chart-title">USD / BRL exchange rate</h2>
+          </div>
+          <div class="range-control" aria-label="Chart date range">
+            <button type="button" data-range="90">3M</button>
+            <button type="button" data-range="180">6M</button>
+            <button type="button" data-range="365" class="active">1Y</button>
+            <button type="button" data-range="all">MAX</button>
+          </div>
+        </div>
+
+        <div class="series-control" role="tablist" aria-label="Financial series">
+          <button type="button" role="tab" aria-selected="true" data-series="usd_brl">USD / BRL</button>
+          <button type="button" role="tab" aria-selected="false" data-series="cdi">CDI</button>
+          <button type="button" role="tab" aria-selected="false" data-series="selic_monthly">Selic</button>
+          <button type="button" role="tab" aria-selected="false" data-series="ipca">IPCA</button>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas id="series-chart" role="img" aria-label="Interactive financial time-series chart"></canvas>
+          <div id="chart-tooltip" class="tooltip" hidden></div>
+        </div>
+        <div class="chart-footer">
+          <span id="chart-period">—</span>
+          <span>Hover or touch to inspect</span>
+        </div>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel insight-panel">
+          <p class="eyebrow">REAL RATE LENS</p>
+          <h2>Selic minus inflation</h2>
+          <p>The monthly spread is a compact signal of Brazil's approximate real interest-rate environment.</p>
+          <div class="real-rate-value">
+            <strong id="real-rate">—</strong>
+            <span>latest comparable month</span>
+          </div>
+          <div id="real-rate-bars" class="mini-bars" aria-label="Recent approximate real rates"></div>
+        </article>
+
+        <article id="pipeline" class="panel pipeline-panel">
+          <div class="pipeline-heading">
+            <div>
+              <p class="eyebrow">DATA ENGINEERING</p>
+              <h2>From source to signal</h2>
+            </div>
+            <span class="healthy">● HEALTHY</span>
+          </div>
+          <div class="pipeline-flow" aria-label="AWS data pipeline architecture">
+            <div class="flow-node"><span>01</span><strong>BCB API</strong><small>official source</small></div>
+            <i>→</i>
+            <div class="flow-node"><span>02</span><strong>Lambda</strong><small>ingestion</small></div>
+            <i>→</i>
+            <div class="flow-node"><span>03</span><strong>S3</strong><small>raw lake</small></div>
+            <i>→</i>
+            <div class="flow-node"><span>04</span><strong>Glue</strong><small>Parquet</small></div>
+            <i>→</i>
+            <div class="flow-node"><span>05</span><strong>Athena</strong><small>analytics</small></div>
+          </div>
+          <div class="guardrails">
+            <span>10 MB query cutoff</span>
+            <span>weekday ingestion</span>
+            <span>cost alarm active</span>
+          </div>
+        </article>
+      </section>
+
+      <section class="manifesto">
+        <p>Built to turn cloud architecture into a result you can <em>see, question and explore.</em></p>
+      </section>
+    </main>
+
+    <footer class="shell">
+      <span>Guilherme Vital · Data Engineering & Analytics</span>
+      <span>Educational project · Not financial advice</span>
+    </footer>
+  </body>
+</html>
