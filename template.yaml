@@ -225,6 +225,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - s3:GetBucketLocation
+                  - s3:ListBucket
                   - s3:ListBucketMultipartUploads
                 Resource: !GetAtt RawDataBucket.Arn
               - Sid: ReadRawAndArtifacts
