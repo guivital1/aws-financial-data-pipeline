@@ -8,6 +8,7 @@ analytics/target/
 analytics/dbt_packages/
 analytics/logs/
 analytics/warehouse/
+analytics/.user.yml
 venv/
 .env
 .DS_Store
