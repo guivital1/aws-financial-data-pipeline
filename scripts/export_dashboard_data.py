@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from financial_pipeline.pipeline import collect, select_series
-
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "docs" / "data" / "financial-series.json"
@@ -28,12 +27,10 @@ def main() -> None:
                 "records": [],
             },
         )
-        series["records"].append(
-            {"date": record["observation_date"], "value": record["value"]}
-        )
+        series["records"].append({"date": record["observation_date"], "value": record["value"]})
 
     payload = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "source": "Banco Central do Brasil - SGS",
         "series": grouped,
     }

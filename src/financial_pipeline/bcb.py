@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import Callable
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -90,7 +90,13 @@ class BCBClient:
                 if not isinstance(payload, list):
                     raise BCBError("BCB response must be a JSON list")
                 return payload
-            except (HTTPError, URLError, TimeoutError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            except (
+                HTTPError,
+                URLError,
+                TimeoutError,
+                UnicodeDecodeError,
+                json.JSONDecodeError,
+            ) as exc:
                 last_error = exc
                 if attempt < self.retries:
                     self.sleeper(2 ** (attempt - 1))
@@ -105,7 +111,7 @@ def normalize_observations(
     source_url: str,
     ingested_at: datetime | None = None,
 ) -> list[dict[str, Any]]:
-    timestamp = (ingested_at or datetime.now(timezone.utc)).isoformat()
+    timestamp = (ingested_at or datetime.now(UTC)).isoformat()
     observations: list[dict[str, Any]] = []
 
     for item in payload:

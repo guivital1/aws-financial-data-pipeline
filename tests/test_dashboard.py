@@ -2,16 +2,13 @@ import json
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class DashboardTests(unittest.TestCase):
     def test_snapshot_contains_all_financial_series(self):
         payload = json.loads(
-            (ROOT / "docs" / "data" / "financial-series.json").read_text(
-                encoding="utf-8"
-            )
+            (ROOT / "docs" / "data" / "financial-series.json").read_text(encoding="utf-8")
         )
         self.assertEqual(
             set(payload["series"]),

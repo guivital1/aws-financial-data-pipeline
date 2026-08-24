@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from financial_pipeline.config import SERIES
@@ -28,7 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     output = args.output or Path("data/raw") / f"bcb-{timestamp}.jsonl"
     records = collect(select_series(args.series))
     count = write_jsonl(records, output)
