@@ -1,0 +1,8 @@
+financial_analytics:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: "{{ env_var('DBT_DUCKDB_PATH', 'analytics/warehouse/financial_analytics.duckdb') }}"
+      schema: analytics
+      threads: 4

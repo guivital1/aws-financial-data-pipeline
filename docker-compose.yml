@@ -1,0 +1,8 @@
+services:
+  analytics:
+    build: .
+    volumes:
+      - ./analytics/warehouse:/app/analytics/warehouse
+    environment:
+      DBT_DUCKDB_PATH: /app/analytics/warehouse/financial_analytics.duckdb
+    command: make analytics

@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: dim_indicator
+    description: Business metadata for each tracked financial indicator.
+    columns:
+      - name: indicator_key
+        tests: [not_null, unique]
+      - name: series_slug
+        tests: [not_null, unique]
+  - name: dim_date
+    description: Calendar dimension derived from available BCB observations.
+    columns:
+      - name: date_key
+        tests: [not_null, unique]
+  - name: fct_financial_observation
+    description: Grain is one financial indicator observation per date.
+    columns:
+      - name: observation_key
+        tests: [not_null, unique]
+      - name: indicator_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_indicator')
+                field: indicator_key
+      - name: date_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+  - name: mart_real_interest
+    description: Monthly Selic minus IPCA analytical signal for dashboard use.
+    columns:
+      - name: observation_date
+        tests: [not_null, unique]

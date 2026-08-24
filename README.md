@@ -17,9 +17,9 @@
 
 ## Pipeline at a glance
 
-| Source | Ingestion | Processing | Analytics | Visualization |
-| :---: | :---: | :---: | :---: | :---: |
-| BCB SGS API | EventBridge + Lambda | S3 + Glue + Parquet | Athena + SQL | Interactive GitHub Pages |
+| Source | Ingestion | Processing | Modeling | Analytics | Visualization |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| BCB SGS API | EventBridge + Lambda | S3 + Glue + Parquet | dbt · Bronze/Silver/Gold | Athena + SQL | Interactive GitHub Pages |
 
 ```mermaid
 flowchart LR
@@ -28,9 +28,15 @@ flowchart LR
     L --> RAW[(S3 · raw)]
     RAW --> G[Glue]
     G --> CUR[(S3 · Parquet)]
-    CUR --> A[Athena]
+    CUR --> M[dbt dimensional models]
+    M --> A[Athena]
     A --> D[Interactive dashboard]
 ```
+
+The repository now includes an executable local analytics warehouse using
+DuckDB and dbt. It produces `dim_indicator`, `dim_date`,
+`fct_financial_observation` and `mart_real_interest`, with Python and dbt quality
+gates before publication.
 
 ## Financial signals
 
@@ -71,6 +77,26 @@ financial-pipeline --series usd_brl ipca
 </details>
 
 <details>
+  <summary><strong>Build the analytics product</strong></summary>
+
+```bash
+python -m pip install -e '.[dev]'
+make analytics
+```
+
+Or run the same workflow in a disposable container:
+
+```bash
+docker compose run --rm analytics
+```
+
+The Airflow DAG in `orchestration/dags/` uses the same commands. See the
+[production-readiness notes](docs/production-readiness.md) for quality SLAs,
+recovery and the AWS mapping.
+
+</details>
+
+<details>
   <summary><strong>Run the quality checks</strong></summary>
 
 ```bash
@@ -86,6 +112,8 @@ python -m compileall -q src tests glue
 src/financial_pipeline/  ingestion, validation and Lambda handler
 glue/                    JSONL → partitioned Parquet transformation
 sql/                     Athena schema and analytical view
+analytics/               dbt staging, dimensions, fact and analytical mart
+orchestration/dags/      Airflow DAG for the full data product
 template.yaml            cost-controlled AWS SAM infrastructure
 docs/                    interactive dashboard, architecture and evidence
 scripts/                 dashboard data export
@@ -107,6 +135,11 @@ tests/                   deterministic unit tests
 - [x] Interactive public dashboard
 - [x] Monitoring and deployment evidence
 - [x] Portfolio case study and final visualization
+- [x] Bronze, Silver and Gold data architecture
+- [x] Dimensional modeling with dbt
+- [x] Automated data-quality and freshness gates
+- [x] Airflow-compatible orchestration
+- [x] Docker and Makefile developer workflow
 
 ## Data and responsibility
 

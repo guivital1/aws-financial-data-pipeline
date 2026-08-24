@@ -1,6 +1,6 @@
 import json
 import unittest
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from financial_pipeline.bcb import BCBClient, BCBError, normalize_observations
 from financial_pipeline.config import SERIES
@@ -14,9 +14,7 @@ class BCBClientTests(unittest.TestCase):
         )
 
     def test_fetch_normalizes_payload(self) -> None:
-        payload = json.dumps(
-            [{"data": "01/07/2026", "valor": "0.07"}]
-        ).encode()
+        payload = json.dumps([{"data": "01/07/2026", "valor": "0.07"}]).encode()
         client = BCBClient(transport=lambda _url, _timeout: payload)
 
         records = client.fetch(
@@ -37,7 +35,7 @@ class BCBClientTests(unittest.TestCase):
                 SERIES["ipca"],
                 [{"data": "01/07/2026", "valor": "invalid"}],
                 source_url="https://example.invalid",
-                ingested_at=datetime(2026, 8, 21, tzinfo=timezone.utc),
+                ingested_at=datetime(2026, 8, 21, tzinfo=UTC),
             )
 
     def test_duplicate_dates_are_rejected(self) -> None:
@@ -46,9 +44,7 @@ class BCBClientTests(unittest.TestCase):
             {"data": "01/07/2026", "valor": "0.08"},
         ]
         with self.assertRaisesRegex(BCBError, "Duplicate date"):
-            normalize_observations(
-                SERIES["ipca"], payload, source_url="https://example.invalid"
-            )
+            normalize_observations(SERIES["ipca"], payload, source_url="https://example.invalid")
 
 
 if __name__ == "__main__":
